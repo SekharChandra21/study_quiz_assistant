@@ -4,6 +4,10 @@
 
 StudyFlow AI is a full-stack AI-powered study assistant built as part of a frontend engineering assignment.
 
+## Completion Time
+
+The project was completed in approximately 6 to 7 hours.
+
 Users can paste study material or notes, and the application uses a Large Language Model (LLM) to generate a structured study set containing:
 
 * Flashcards
