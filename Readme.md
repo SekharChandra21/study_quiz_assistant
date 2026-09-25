@@ -792,6 +792,109 @@ http://localhost:5173
 
 ---
 
+# Deployment
+
+Deploy the `server` directory to Railway and the `client` directory to Vercel.
+Deploy the backend first so the frontend can use its public API URL.
+
+## Deploy the Server to Railway
+
+### Railway dashboard
+
+1. Create a Railway project from this repository.
+2. Add a service from the repository.
+3. Set the service root directory to `/server`.
+4. Railway uses `server/railway.json` and runs `npm start`.
+5. Add these Railway variables:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+PORT=5000
+```
+
+6. Generate a public Railway domain for the service.
+7. Verify the deployment at:
+
+```text
+https://your-railway-domain.up.railway.app/api/health
+```
+
+The health response should contain `"success": true`.
+
+### Railway CLI
+
+Install and authenticate with the Railway CLI, then run:
+
+```powershell
+cd F:\ReactProjects\study_assistant\server
+railway login
+railway init
+railway link
+railway variables set GROQ_API_KEY=your_groq_api_key_here PORT=5000
+railway up
+railway domain
+```
+
+Keep the generated Railway API URL for Vercel.
+
+## Deploy the Client to Vercel
+
+### Vercel dashboard
+
+1. Import this repository into Vercel.
+2. Set the project root directory to `client`.
+3. Use `npm run build` as the build command.
+4. Use `dist` as the output directory.
+5. Add this environment variable:
+
+```env
+VITE_API_BASE_URL=https://your-railway-domain.up.railway.app
+```
+
+6. Deploy the project.
+
+The `client/vercel.json` file configures the Vite build and SPA fallback.
+
+### Vercel CLI
+
+Install and authenticate with the Vercel CLI, then run:
+
+```powershell
+cd F:\ReactProjects\study_assistant\client
+npm install
+npm run build
+npx vercel login
+npx vercel
+npx vercel env add VITE_API_BASE_URL production
+npx vercel --prod
+```
+
+Enter the Railway public URL when Vercel requests the environment value.
+
+## Deployment Checks
+
+Run these checks before deploying:
+
+```powershell
+cd F:\ReactProjects\study_assistant\client
+npm run lint
+npm run build
+
+cd ..\server
+node --check server.js
+```
+
+After deployment:
+
+1. Open the Railway `/api/health` endpoint.
+2. Open the Vercel application URL.
+3. Generate a study set using at least ten characters.
+4. Check the browser console for API request errors.
+
+Never add `GROQ_API_KEY` to Vercel. It belongs only in Railway.
+
+---
+
 # Application Flow
 
 The complete application flow is:
