@@ -794,48 +794,63 @@ http://localhost:5173
 
 # Deployment
 
-Deploy the `server` directory to Railway and the `client` directory to Vercel.
+Deploy the `server` directory to Render and the `client` directory to Vercel.
 Deploy the backend first so the frontend can use its public API URL.
 
-## Deploy the Server to Railway
+## Deploy the Server to Render
 
-### Railway dashboard
+### Render dashboard
 
-1. Create a Railway project from this repository.
-2. Add a service from the repository.
-3. Set the service root directory to `/server`.
-4. Railway uses `server/railway.json` and runs `npm start`.
-5. Add these Railway variables:
+1. Create a new Web Service from this repository.
+2. Set the root directory to `server`.
+3. Set the runtime to `Node`.
+4. Set the build command to:
+
+```text
+npm install
+```
+
+5. Set the start command to:
+
+```text
+npm start
+```
+
+6. Add this Render environment variable:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
-PORT=5000
 ```
 
-6. Generate a public Railway domain for the service.
-7. Verify the deployment at:
+Render supplies the `PORT` variable automatically. Do not hardcode it.
+
+7. Create the service and copy its public URL.
+8. Verify the deployment at:
 
 ```text
-https://your-railway-domain.up.railway.app/api/health
+https://your-render-service.onrender.com/api/health
 ```
 
 The health response should contain `"success": true`.
 
-### Railway CLI
+The repository also includes `render.yaml` with these settings.
 
-Install and authenticate with the Railway CLI, then run:
+### Render Blueprint
+
+In Render, choose **New > Blueprint** and select this repository.
+Render reads `render.yaml`, creates the web service, and asks for:
+`GROQ_API_KEY` because it is marked as a secret.
+
+### Render CLI
+
+Render deployments are usually created from the dashboard or Blueprint.
+After creating the service, trigger a deploy from the Render dashboard.
 
 ```powershell
-cd F:\ReactProjects\study_assistant\server
-railway login
-railway init
-railway link
-railway variables set GROQ_API_KEY=your_groq_api_key_here PORT=5000
-railway up
-railway domain
+curl https://your-render-service.onrender.com/api/health
 ```
 
-Keep the generated Railway API URL for Vercel.
+Keep the generated Render API URL for Vercel.
 
 ## Deploy the Client to Vercel
 
@@ -848,7 +863,7 @@ Keep the generated Railway API URL for Vercel.
 5. Add this environment variable:
 
 ```env
-VITE_API_BASE_URL=https://your-railway-domain.up.railway.app
+VITE_API_BASE_URL=https://your-render-service.onrender.com
 ```
 
 6. Deploy the project.
@@ -869,7 +884,7 @@ npx vercel env add VITE_API_BASE_URL production
 npx vercel --prod
 ```
 
-Enter the Railway public URL when Vercel requests the environment value.
+Enter the Render public URL when Vercel requests the environment value.
 
 ## Deployment Checks
 
@@ -886,12 +901,12 @@ node --check server.js
 
 After deployment:
 
-1. Open the Railway `/api/health` endpoint.
+1. Open the Render `/api/health` endpoint.
 2. Open the Vercel application URL.
 3. Generate a study set using at least ten characters.
 4. Check the browser console for API request errors.
 
-Never add `GROQ_API_KEY` to Vercel. It belongs only in Railway.
+Never add `GROQ_API_KEY` to Vercel. It belongs only in Render.
 
 ---
 
