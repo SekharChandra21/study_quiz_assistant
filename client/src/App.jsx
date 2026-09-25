@@ -37,7 +37,7 @@ function App() {
       return;
     }
 
-    // Cancel previous request
+    // Cancel previous request.
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -66,7 +66,7 @@ function App() {
 
       clearTimeout(timeoutId);
 
-      // Ignore stale request
+      // Ignore stale response.
       if (requestId !== requestIdRef.current) {
         console.info("[study-ui] Ignoring stale study response", {
           requestId: correlationId
@@ -74,7 +74,7 @@ function App() {
         return;
       }
 
-      // Defensive frontend validation
+      // Validate response shape.
       const isValidResult = validateStudyResult(result);
 
       console.info("[study-ui] Validating response received from API", {
@@ -100,6 +100,8 @@ function App() {
       console.info("[study-ui] Study generation failed", {
         requestId: correlationId,
         name: error.name,
+        code: error.code || "UNKNOWN_ERROR",
+        status: error.status || null,
         message: error.message
       });
 
@@ -117,9 +119,12 @@ function App() {
         return;
       }
 
+      const message = error.name === "TypeError"
+        ? "The study service could not be reached. Check that the server is running and try again."
+        : error.message || "Unable to generate the study set. Please try again.";
+
       setError(
-        error.message ||
-          "Unable to generate the study set."
+        message
       );
     } finally {
       if (requestId === requestIdRef.current) {
@@ -163,6 +168,7 @@ function App() {
 
       {!loading && studySet && !error && (
         <ResultView
+          key={studySet.cards[0]?.id || studySet.title}
           studySet={studySet}
         />
       )}

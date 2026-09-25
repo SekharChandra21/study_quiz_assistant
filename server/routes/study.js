@@ -21,7 +21,7 @@ router.post("/generate", async (req, res) => {
 
   try {
 
-    // Validate user input
+    // Validate input.
 
     const inputResult = studyInputSchema.safeParse(req.body);
 
@@ -44,11 +44,11 @@ router.post("/generate", async (req, res) => {
 
     const { input } = inputResult.data;
 
-    // Call Groq
+    // Call the AI service.
 
     const aiResult = await generateStudySet(input, requestId);
 
-    // Validate AI response
+    // Validate AI output.
 
     const validationResult = studySetSchema.safeParse(aiResult);
 
@@ -68,7 +68,7 @@ router.post("/generate", async (req, res) => {
       });
     }
 
-    // Generate application IDs
+    // Add application IDs.
 
     const studySet = normalizeStudySet(
       validationResult.data
@@ -82,7 +82,7 @@ router.post("/generate", async (req, res) => {
       responseKeys: Object.keys(studySet)
     });
 
-    // Return validated result
+    // Return the study set.
 
     return res.status(200).json({
       success: true,

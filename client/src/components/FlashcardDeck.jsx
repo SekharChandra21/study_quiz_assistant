@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Flashcard from "./Flashcard";
 
 function FlashcardDeck({ cards }) {
@@ -16,19 +16,19 @@ function FlashcardDeck({ cards }) {
   const progress =
     (currentNumber / totalCards) * 100;
 
-  const goNext = () => {
+  const goNext = useCallback(() => {
     if (currentIndex < totalCards - 1) {
       setCurrentIndex((index) => index + 1);
       setShowAnswer(false);
     }
-  };
+  }, [currentIndex, totalCards]);
 
-  const goPrevious = () => {
+  const goPrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((index) => index - 1);
       setShowAnswer(false);
     }
-  };
+  }, [currentIndex]);
 
   const markCard = (known) => {
     const cardId = currentCard.id;
@@ -98,7 +98,7 @@ function FlashcardDeck({ cards }) {
         handleKeyDown
       );
     };
-  }, [currentIndex, totalCards]);
+  }, [goNext, goPrevious]);
 
   if (!currentCard) {
     return null;
@@ -114,6 +114,10 @@ function FlashcardDeck({ cards }) {
 
           <span>
             {knownCards.length} known
+          </span>
+
+          <span>
+            {unknownCards.length} to review
           </span>
         </div>
 

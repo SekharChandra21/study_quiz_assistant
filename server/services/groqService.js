@@ -6,6 +6,7 @@ const groq = new Groq({
 });
 
 async function generateStudySet(input, requestId) {
+
   console.info("[study-llm] Sending request to Groq", {
     requestId,
     model: "openai/gpt-oss-20b",

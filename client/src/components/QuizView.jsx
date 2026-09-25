@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import QuizQuestion from "./QuizQuestion";
 import QuizComplete from "./QuizComplete";
 
@@ -9,22 +9,16 @@ function QuizView({ questions }) {
 
   const [score, setScore] = useState(0);
 
-  // Questions that are currently still wrong.
+  // Track missed questions.
   const [wrongQuestions, setWrongQuestions] = useState([]);
 
-  // Snapshot used only for the current review session.
+  // Store review snapshot.
   const [reviewQuestions, setReviewQuestions] = useState([]);
 
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [completed, setCompleted] = useState(false);
 
-  /*
-   * In normal mode:
-   *   activeQuestions = original quiz
-   *
-   * In review mode:
-   *   activeQuestions = snapshot of questions being reviewed
-   */
+  // Choose questions for the current mode.
   const activeQuestions = isReviewMode
     ? reviewQuestions
     : questions;
@@ -32,82 +26,7 @@ function QuizView({ questions }) {
   const currentQuestion = activeQuestions[currentIndex];
   const totalQuestions = activeQuestions.length;
 
-  /*
-   * Reset everything when a completely new study set is generated.
-   */
-  useEffect(() => {
-    setCurrentIndex(0);
-    setSelectedAnswer(null);
-    setSubmitted(false);
-    setScore(0);
-
-    setWrongQuestions([]);
-    setReviewQuestions([]);
-
-    setIsReviewMode(false);
-    setCompleted(false);
-  }, [questions]);
-
-  /*
-   * Keyboard shortcuts:
-   * 1-4 -> select answer
-   * Enter -> submit / next
-   */
-  useEffect(() => {
-    const handleKeyDown = (event) => {
-      if (completed || !currentQuestion) {
-        return;
-      }
-
-      const target = event.target;
-
-      if (
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      if (!submitted) {
-        const key = Number(event.key);
-
-        if (key >= 1 && key <= 4) {
-          const answerIndex = key - 1;
-
-          if (
-            answerIndex <
-            currentQuestion.options.length
-          ) {
-            setSelectedAnswer(answerIndex);
-          }
-        }
-
-        if (
-          event.key === "Enter" &&
-          selectedAnswer !== null
-        ) {
-          handleSubmit();
-        }
-      } else if (event.key === "Enter") {
-        handleNext();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [
-    completed,
-    currentQuestion,
-    submitted,
-    selectedAnswer
-  ]);
-
-  /*
-   * Select an answer.
-   */
+  // Select an answer.
   const handleSelectAnswer = (index) => {
     if (submitted) {
       return;
@@ -116,10 +35,8 @@ function QuizView({ questions }) {
     setSelectedAnswer(index);
   };
 
-  /*
-   * Submit the current answer.
-   */
-  const handleSubmit = () => {
+  // Handle answer scoring.
+  const handleSubmit = useCallback(() => {
     if (
       selectedAnswer === null ||
       submitted ||
@@ -133,9 +50,7 @@ function QuizView({ questions }) {
     const isCorrect =
       selectedAnswer === currentQuestion.correctAnswer;
 
-    /*
-     * NORMAL QUIZ
-     */
+    // Score the original quiz.
     if (!isReviewMode) {
       if (isCorrect) {
         setScore((previous) => previous + 1);
@@ -157,12 +72,7 @@ function QuizView({ questions }) {
       return;
     }
 
-    /*
-     * REVIEW MODE
-     *
-     * If the user gets a previously wrong question
-     * correct, remove it from wrongQuestions.
-     */
+    // Update the review list.
     if (isCorrect) {
       setScore((previous) => previous + 1);
 
@@ -173,10 +83,7 @@ function QuizView({ questions }) {
         )
       );
     } else {
-      /*
-       * If they get it wrong again, make sure it
-       * remains in wrongQuestions.
-       */
+      // Keep missed questions available.
       setWrongQuestions((previous) => {
         const alreadyExists = previous.some(
           (question) =>
@@ -190,12 +97,10 @@ function QuizView({ questions }) {
         return [...previous, currentQuestion];
       });
     }
-  };
+  }, [currentQuestion, isReviewMode, selectedAnswer, submitted]);
 
-  /*
-   * Move to next question.
-   */
-  const handleNext = () => {
+  // Advance or finish the quiz.
+  const handleNext = useCallback(() => {
     if (currentIndex < totalQuestions - 1) {
       setCurrentIndex((previous) => previous + 1);
       setSelectedAnswer(null);
@@ -204,11 +109,9 @@ function QuizView({ questions }) {
     }
 
     setCompleted(true);
-  };
+  }, [currentIndex, totalQuestions]);
 
-  /*
-   * Start the complete original quiz again.
-   */
+  // Restart the original quiz.
   const handleRetry = () => {
     setCurrentIndex(0);
     setSelectedAnswer(null);
@@ -222,18 +125,13 @@ function QuizView({ questions }) {
     setCompleted(false);
   };
 
-  /*
-   * Start a NEW review session using only the
-   * questions that are currently wrong.
-   */
+  // Start a review of missed questions.
   const handleReviewWrong = () => {
     if (wrongQuestions.length === 0) {
       return;
     }
 
-    /*
-     * Take a snapshot of the CURRENT wrong questions.
-     */
+    // Snapshot the current missed questions.
     setReviewQuestions([...wrongQuestions]);
 
     setIsReviewMode(true);
@@ -245,16 +143,61 @@ function QuizView({ questions }) {
     setCompleted(false);
   };
 
-  /*
-   * If there are no questions.
-   */
+  // Support keyboard shortcuts.
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (completed || !currentQuestion) {
+        return;
+      }
+
+      const target = event.target;
+
+      if (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (!submitted) {
+        const key = Number(event.key);
+
+        if (key >= 1 && key <= 4) {
+          const answerIndex = key - 1;
+
+          if (answerIndex < currentQuestion.options.length) {
+            setSelectedAnswer(answerIndex);
+          }
+        }
+
+        if (event.key === "Enter" && selectedAnswer !== null) {
+          handleSubmit();
+        }
+      } else if (event.key === "Enter") {
+        handleNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    completed,
+    currentQuestion,
+    handleNext,
+    handleSubmit,
+    selectedAnswer,
+    submitted
+  ]);
+
+  // Handle an empty quiz.
   if (!currentQuestion && !completed) {
     return null;
   }
 
-  /*
-   * Completion screen.
-   */
+  // Show the completion screen.
   if (completed) {
     return (
       <QuizComplete
